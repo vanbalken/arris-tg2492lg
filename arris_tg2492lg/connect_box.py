@@ -1,14 +1,13 @@
 import base64
 import json
+import logging
 import random
 import requests
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-LOG = logging.getLogger(__name__)
-
 from .single_value_cache import SingleValueCache
 from .mib_mapper import *
+
+LOG = logging.getLogger(__name__)
 
 class ConnectBox:
     USERNAME = "admin"
@@ -31,8 +30,8 @@ class ConnectBox:
             raise Exception("Failed to login")
 
         token = response.text
-
-        LOG.debug("token: %s", token)
+        
+        LOG.debug("Received token: %s", token)
 
         return token
 

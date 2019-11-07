@@ -1,3 +1,4 @@
+import argparse
 import sys
 
 try:
@@ -11,21 +12,18 @@ except ImportError:
     from arris_tg2492lg import ConnectBox
 
 def filter_online(device):
-    return device.online == "1"
+    return device.online is True
 
 def map_mac_address(device):
     return device.mac
 
 def main():
-    '''
-    $ python3 list_online_devices.py http://192.168.178.1 <router-password>
-
-    Returns mac addresses of all connected devices that are online.
-    '''
-    host = sys.argv[1]
-    password = sys.argv[2]
+    parser = argparse.ArgumentParser(description="List MAC addresses of all online devices.")
+    parser.add_argument("--host", action="store", dest="host", help="ip-address of the router")
+    parser.add_argument("--password", action="store", dest="password", help="passwordt of the router")
+    args = parser.parse_args()
     
-    connectBox = ConnectBox(host, password)
+    connectBox = ConnectBox(args.host, args.password)    
     devices = connectBox.get_connected_devices()
 
     # filter out offline devices
