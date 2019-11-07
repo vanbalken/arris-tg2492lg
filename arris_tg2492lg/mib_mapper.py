@@ -73,7 +73,7 @@ def to_devices(json_string):
         elif oid == ROW_STATUS_OID:
             current_device.row_status = value
         elif oid == ONLINE_OID:
-            current_device.online = value
+            current_device.online = value == "1"
         elif oid == COMMENT_OID:
             current_device.comment = value
         elif oid == DEVICE_NAME_OID:
@@ -112,5 +112,5 @@ def format_date(value):
     seconds = hex_array[6]
     micro_seconds = hex_array[7]
 
-    date = "{:02d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}:{:02d}".format(years, months, days, hours, minutes, seconds, micro_seconds )
+    date = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}:{:02d}".format(years, months, days, hours, minutes, seconds, micro_seconds )
     return date
