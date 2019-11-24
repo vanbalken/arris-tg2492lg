@@ -20,11 +20,11 @@ def map_mac_address(device):
 def main():
     parser = argparse.ArgumentParser(description="List MAC addresses of all online devices.")
     parser.add_argument("--host", action="store", dest="host", help="ip-address of the router")
-    parser.add_argument("--password", action="store", dest="password", help="passwordt of the router")
+    parser.add_argument("--password", action="store", dest="password", help="password of the router")
     args = parser.parse_args()
     
-    connectBox = ConnectBox(args.host, args.password)    
-    devices = connectBox.get_connected_devices()
+    connect_box = ConnectBox(args.host, args.password)    
+    devices = connect_box.get_connected_devices()
 
     # filter out offline devices
     devices = list(filter(filter_online, devices))
