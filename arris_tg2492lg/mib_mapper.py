@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import re
 from collections import OrderedDict
@@ -43,6 +44,7 @@ ADAPTER_TYPES = {
 }
 
 def to_devices(json_string):
+    """ Maps JSON result from router to Devices. """
     json_data = json.loads(json_string, object_pairs_hook=OrderedDict)
     devices = []
     current_device = None
@@ -53,8 +55,11 @@ def to_devices(json_string):
 
         split_key = key.split(".")
         oid = ".".join(split_key[:16])
+
+        # ip address, either ipv4 or ipv6. ip version is specified by "split_key[17:19]", which can be ignored.
         ip_split = split_key[19:]
-        ip = ".".join(ip_split)
+        ip_bytes = bytes(map(int, ip_split))
+        ip = ipaddress.ip_address(ip_bytes)
 
         if current_device is None or current_device.ip != ip:
             current_device = Device(ip)
