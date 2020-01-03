@@ -26,4 +26,5 @@ An example for retrieving a list of the MAC addresses of all online device is in
 
 Running the tests:
 ```bash
-python3 -m unittest
+$ python3 -m unittest
+```
