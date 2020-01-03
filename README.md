@@ -21,3 +21,9 @@ print(devices)
 Please note that the list of connected devices include devices that are offline (e.g. just went out of range of the wifi). The `Device` class contains a property `online` that can be checked.
 
 An example for retrieving a list of the MAC addresses of all online device is included in the `examples` folder.
+
+## Development
+
+Running the tests:
+```bash
+python3 -m unittest
