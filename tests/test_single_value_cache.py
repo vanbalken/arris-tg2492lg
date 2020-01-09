@@ -1,6 +1,7 @@
 import unittest
 
-from arris_tg2492lg import SingleValueCache
+from arris_tg2492lg.single_value_cache import SingleValueCache
+
 
 class TestSingleValueCache(unittest.TestCase):
     count = 0

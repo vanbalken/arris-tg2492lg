@@ -10,6 +10,6 @@ class Device:
         self.online = None
         self.comment = None
         self.device_name = None
-    
+
     def __str__(self):
         return "ip: %s, hostname: %s" % (self.ip, self.hostname)

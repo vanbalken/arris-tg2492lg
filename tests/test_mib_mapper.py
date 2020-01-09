@@ -1,7 +1,8 @@
 import unittest
 import ipaddress
 
-from arris_tg2492lg import mib_mapper
+import arris_tg2492lg.mib_mapper as mib_mapper
+
 
 class TestMibMapper(unittest.TestCase):
     def test_to_devices(self):
@@ -91,7 +92,7 @@ class TestMibMapper(unittest.TestCase):
         self.assertEqual(device3.device_name, "device 3")
 
         device4 = devices[3]
-        
+
         self.assertEqual(device4.ip, ipaddress.ip_address("2001:1c12:8d6:bb00:b0f6:855a:dcd:5529"))
         self.assertEqual(device4.hostname, "My Device")
         self.assertEqual(device4.mac, "12:34:56:78:90:AB")
