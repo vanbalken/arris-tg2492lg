@@ -1,9 +1,12 @@
 import ipaddress
 import json
+import logging
 import re
 from collections import OrderedDict
 
 from .device import Device
+
+LOG = logging.getLogger(__name__)
 
 ARRIS_ENTERPRISE_OID = "1.3.6.1.4.1.4115"
 HOST_NAME_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.3"
@@ -43,6 +46,7 @@ ADAPTER_TYPES = {
     23: "ethernet4"
 }
 
+
 def to_devices(json_string):
     """ Maps JSON result from router to Devices. """
     json_data = json.loads(json_string, object_pairs_hook=OrderedDict)
@@ -51,6 +55,9 @@ def to_devices(json_string):
 
     for key, value in json_data.items():
         if key == "1" and value == "Finish":
+            break
+
+        if key == "routerCurrentTime":
             break
 
         split_key = key.split(".")
@@ -84,9 +91,10 @@ def to_devices(json_string):
         elif oid == DEVICE_NAME_OID:
             current_device.device_name = value
         else:
-            print("Unknown OID: %s", key)
+            LOG.warn("Unknown OID: %s", key)
 
     return devices
+
 
 def format_mac(value):
     if not re.fullmatch(r'^\$[0-9A-Fa-f]{12}$', value):
@@ -96,16 +104,17 @@ def format_mac(value):
     mac = ""
 
     for i in range(6):
-        mac += value[i*2:i*2+2]
+        mac += value[i * 2:i * 2 + 2]
         if i + 1 < 6:
             mac += ":"
 
     return mac
 
+
 def format_date(value):
     if not re.fullmatch(r'^\$[0-9A-Fa-f]+$', value):
         return None
-    
+
     hex_array = bytes.fromhex(value[1:])
 
     years = hex_array[0] * 256 + hex_array[1]
@@ -117,5 +126,5 @@ def format_date(value):
     seconds = hex_array[6]
     micro_seconds = hex_array[7]
 
-    date = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}:{:02d}".format(years, months, days, hours, minutes, seconds, micro_seconds )
+    date = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}:{:02d}".format(years, months, days, hours, minutes, seconds, micro_seconds)
     return date
