@@ -1,9 +1,12 @@
 import ipaddress
 import json
+import logging
 import re
 from collections import OrderedDict
 
 from .device import Device
+
+LOG = logging.getLogger(__name__)
 
 ARRIS_ENTERPRISE_OID = "1.3.6.1.4.1.4115"
 HOST_NAME_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.3"
@@ -54,6 +57,9 @@ def to_devices(json_string):
         if key == "1" and value == "Finish":
             break
 
+        if key == "routerCurrentTime":
+            break
+
         split_key = key.split(".")
         oid = ".".join(split_key[:16])
 
@@ -85,7 +91,7 @@ def to_devices(json_string):
         elif oid == DEVICE_NAME_OID:
             current_device.device_name = value
         else:
-            print("Unknown OID: %s", key)
+            LOG.warn("Unknown OID: %s", key)
 
     return devices
 
