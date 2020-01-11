@@ -20,7 +20,7 @@ class TestSingleValueCache(unittest.TestCase):
         self.assertEqual(svc.get(), 1)
 
     def test_supplier_method_is_used_after_value_expired(self):
-        svc = SingleValueCache(0, self.counter)
+        svc = SingleValueCache(-100, self.counter)
 
         self.assertEqual(svc.get(), 1)
         self.assertEqual(svc.get(), 2)
