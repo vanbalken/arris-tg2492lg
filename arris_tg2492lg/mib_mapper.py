@@ -3,6 +3,7 @@ import json
 import logging
 import re
 from collections import OrderedDict
+from typing import List, Optional
 
 from .device import Device
 
@@ -47,20 +48,19 @@ ADAPTER_TYPES = {
 }
 
 
-def to_devices(json_string):
+def to_devices(json_string: str) -> List[Device]:
     """ Maps JSON result from router to Devices. """
-    json_data = json.loads(json_string, object_pairs_hook=OrderedDict)
-    devices = []
+    json_data: OrderedDict[str, str] = json.loads(json_string, object_pairs_hook=OrderedDict)
+    devices: List[Device] = []
     current_device = None
 
     for key, value in json_data.items():
-        if key == "1" and value == "Finish":
-            break
-
-        if key == "routerCurrentTime":
-            break
-
         split_key = key.split(".")
+
+        if len(split_key) < 19:
+            LOG.debug("Found non-OID key: %s, with value: %s", key, value)
+            continue
+
         oid = ".".join(split_key[:16])
 
         # ip address, either ipv4 or ipv6. ip version is specified by "split_key[17:19]", which can be ignored.
@@ -96,7 +96,7 @@ def to_devices(json_string):
     return devices
 
 
-def format_mac(value):
+def format_mac(value: str) -> Optional[str]:
     if not re.fullmatch(r'^\$[0-9A-Fa-f]{12}$', value):
         return None
 
@@ -111,7 +111,7 @@ def format_mac(value):
     return mac
 
 
-def format_date(value):
+def format_date(value: str) -> Optional[str]:
     if not re.fullmatch(r'^\$[0-9A-Fa-f]+$', value):
         return None
 

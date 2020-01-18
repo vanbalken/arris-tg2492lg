@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 try:
     from arris_tg2492lg import ConnectBox  # The typical way to import arris_tg2492lg
@@ -20,6 +21,8 @@ def map_mac_address(device):
 
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
+
     parser = argparse.ArgumentParser(description="List MAC addresses of all online devices.")
     parser.add_argument("--host", action="store", dest="host", help="ip-address of the router")
     parser.add_argument("--password", action="store", dest="password", help="password of the router")
