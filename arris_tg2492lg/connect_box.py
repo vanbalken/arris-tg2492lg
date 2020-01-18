@@ -40,4 +40,6 @@ class ConnectBox:
         response = requests.get(self.host + "/getConnDevices?_n=" + str(self.nonce), cookies=cookies)
         response.raise_for_status()
 
+        LOG.debug("getConnDevices response: %s", response.text)
+
         return to_devices(response.text)
