@@ -1,8 +1,9 @@
 from datetime import datetime
+from typing import Callable
 
 
 class SingleValueCache:
-    def __init__(self, expireAfterWrite, supplier):
+    def __init__(self, expireAfterWrite: int, supplier: Callable[[], str]) -> None:
         self.expireAfterWrite = expireAfterWrite
         self.supplier = supplier
         self._createdAt = 0

@@ -17,5 +17,7 @@ jobs:
         python -m pip install -r requirements.txt
     - name: Test
       run: python -m unittest
-    - name: Lint
-      run: python -m flake8
+    - name: Lint and type check
+      run: |
+        python -m flake8
+        python -m mypy arris_tg2492lg
