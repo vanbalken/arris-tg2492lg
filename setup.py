@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="arris-tg2492lg",
-    version="1.0.0",
+    version="1.0.1",
     author="vanbalken",
     description="Python client for the Arris TG2492LG",
     long_description=long_description,
