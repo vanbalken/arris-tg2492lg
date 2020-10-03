@@ -2,3 +2,4 @@ requests
 flake8
 mypy
 pytest
+requests-mock

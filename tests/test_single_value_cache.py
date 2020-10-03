@@ -17,7 +17,7 @@ def counter() -> Counter:
     return Counter()
 
 
-class TestSingleValueCache():
+class TestSingleValueCache:
 
     def test_cached_value_is_used_before_expired(self, counter: Counter) -> None:
         svc = SingleValueCache(100, counter.increment)

@@ -5,7 +5,7 @@ from pathlib import Path
 import arris_tg2492lg.mib_mapper as mib_mapper
 
 
-class TestMibMapper():
+class TestMibMapper:
     def test_to_devices(self) -> None:
         current_path = Path(os.path.dirname(os.path.realpath(__file__)))
         test_data_path = current_path / "getConnDevices-response.json"
