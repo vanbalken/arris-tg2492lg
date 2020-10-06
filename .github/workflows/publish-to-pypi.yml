@@ -2,7 +2,7 @@ name: Publish tags to PyPI
 on:
   push:
     tags:
-      - *
+      - '*'
 
 jobs:
   build-and-publish:
