@@ -15,3 +15,7 @@ class SingleValueCache:
             self._createdAt = datetime.now().timestamp()
 
         return self._value
+
+    def clear(self):
+        self._createdAt = 0
+        self._value = None

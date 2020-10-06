@@ -30,3 +30,12 @@ class TestSingleValueCache:
 
         assert svc.get() == "1"
         assert svc.get() == "2"
+
+    def test_supplier_method_is_used_after_clear(self, counter: Counter) -> None:
+        svc = SingleValueCache(100, counter.increment)
+
+        assert svc.get() == "1"
+
+        svc.clear()
+
+        assert svc.get() == "2"

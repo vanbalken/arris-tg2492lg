@@ -38,10 +38,18 @@ class ConnectBox:
         return token
 
     def get_connected_devices(self) -> List[Device]:
-        cookies = {"credential": self.token.get()}
-        response = requests.get(self.host + "/getConnDevices?_n=" + str(self.nonce), cookies=cookies)
+        response = self.__call_get_connected_devices()
+
+        if response.status_code == 401:
+            self.token.clear()
+            response = self.__call_get_connected_devices()
+
         response.raise_for_status()
 
         LOG.debug("getConnDevices response: %s", response.text)
 
         return to_devices(response.text)
+
+    def __call_get_connected_devices(self) -> requests.Response:
+        cookies = {"credential": self.token.get()}
+        return requests.get(self.host + "/getConnDevices?_n=" + str(self.nonce), cookies=cookies)
