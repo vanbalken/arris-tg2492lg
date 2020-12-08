@@ -9,7 +9,7 @@ import requests
 from aiohttp import ClientSession
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from .const import USERNAME, TOKEN_EXPIRY_TIME
 from .device import Device
@@ -25,7 +25,7 @@ class ConnectBox:
         self.hostname = hostname
         self.password = password
         self.nonce = str(random.randrange(10000, 100000))
-        self.credential: Credential = None
+        self.credential: Optional[Credential] = None
 
     async def async_get_credential(self) -> Credential:
         if self.credential is None or self.credential.expiration_time >= datetime.now().timestamp():
@@ -45,8 +45,6 @@ class ConnectBox:
     async def async_get_connected_devices(self, retry_on_unauthorized=True) -> List[Device]:
         credential = await self.async_get_credential()
 
-        print(credential)
-
         params = {"_n": self.nonce}
         cookies = {"credential": credential.token}
         async with self.websession.get(f"{self.hostname}/getConnDevices", params=params, cookies=cookies) as response:
@@ -64,4 +62,4 @@ class ConnectBox:
 @dataclass
 class Credential:
     token: str # bevat base64 info
-    expiration_time: datetime
+    expiration_time: float

@@ -10,10 +10,10 @@ from arris_tg2492lg.connect_box import ConnectBox
 
 async def test_async_get_credential(aiohttp_client, loop):
     app = web.Application(loop=loop)
-    app.router.add_get('/login', get_credential)
+    app.router.add_get("/login", get_credential)
     client = await aiohttp_client(app)
 
-    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", 'secret')
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
     credential = await connect_box.async_get_credential()
 
     print(credential.token)
@@ -23,11 +23,11 @@ async def test_async_get_credential(aiohttp_client, loop):
 
 async def test_get_connected_devices(aiohttp_client, loop):
     app = web.Application(loop=loop)
-    app.router.add_get('/login', get_credential)
-    app.router.add_get('/getConnDevices', get_mock_data)
+    app.router.add_get("/login", get_credential)
+    app.router.add_get("/getConnDevices", get_mock_data)
     client = await aiohttp_client(app)
 
-    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", 'secret')
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
     connected_devices = await connect_box.async_get_connected_devices()
 
     assert len(connected_devices) == 4
