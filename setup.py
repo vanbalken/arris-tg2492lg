@@ -1,7 +1,6 @@
 import setuptools
 import arris_tg2492lg.const as arris_const
 
-
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
