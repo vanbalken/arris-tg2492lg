@@ -1,31 +1,41 @@
+from __future__ import annotations
+
 import base64
 import logging
 import random
 import requests
-from typing import List
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Optional
 
+from .const import USERNAME, TOKEN_EXPIRY_TIME
 from .device import Device
 from .mib_mapper import to_devices
-from .single_value_cache import SingleValueCache
 
 LOG = logging.getLogger(__name__)
 
 
 class ConnectBox:
-    USERNAME = "admin"
-    TOKEN_EXPIRY_TIME = 5 * 60 * 1000
-
-    def __init__(self, host: str, password: str):
-        self.host = host
+    def __init__(self, hostname: str, password: str):
+        self.hostname = hostname
         self.password = password
-        self.nonce = random.randrange(10000, 100000)
-        self.token = SingleValueCache(ConnectBox.TOKEN_EXPIRY_TIME, self.login)
+        self.nonce = str(random.randrange(10000, 100000))
+        self.credential: Optional[Credential] = None
+
+    def get_credential(self) -> Credential:
+        if self.credential is None or self.credential.expiration_time >= datetime.now().timestamp():
+            token = self.login()
+            self.credential = Credential(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
+
+        return self.credential
 
     def login(self) -> str:
-        arg_string = ConnectBox.USERNAME + ":" + self.password
+        arg_string = f"{USERNAME}:{self.password}"
         arg = base64.b64encode(arg_string.encode("utf-8")).decode("ascii")
 
-        response = requests.get(self.host + "/login?arg=" + arg + "&_n=" + str(self.nonce))
+        params = {"arg": arg, "_n": self.nonce}
+        response = requests.get(f"{self.hostname}/login", params=params)
+
         response.raise_for_status()
 
         if not response.text:
@@ -41,7 +51,7 @@ class ConnectBox:
         response = self.__call_get_connected_devices()
 
         if response.status_code == 401:
-            self.token.clear()
+            self.credential = None
             response = self.__call_get_connected_devices()
 
         response.raise_for_status()
@@ -51,5 +61,15 @@ class ConnectBox:
         return to_devices(response.text)
 
     def __call_get_connected_devices(self) -> requests.Response:
-        cookies = {"credential": self.token.get()}
-        return requests.get(self.host + "/getConnDevices?_n=" + str(self.nonce), cookies=cookies)
+        credential = self.get_credential()
+
+        params = {"_n": self.nonce}
+        cookies = {"credential": credential.token}
+
+        return requests.get(f"{self.hostname}/getConnDevices", params=params, cookies=cookies)
+
+
+@dataclass
+class Credential:
+    token: str
+    expiration_time: float
