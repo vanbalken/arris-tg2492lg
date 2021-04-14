@@ -20,14 +20,14 @@ class ConnectBox:
         self.hostname = hostname
         self.password = password
         self.nonce = str(random.randrange(10000, 100000))
-        self.credential: Optional[Credential] = None
+        self.credentials: Optional[Credentials] = None
 
-    def get_credential(self) -> Credential:
-        if self.credential is None or self.credential.expiration_time >= datetime.now().timestamp():
+    def get_credentials(self) -> Credentials:
+        if self.credentials is None or self.credentials.expiration_time >= datetime.now().timestamp():
             token = self.login()
-            self.credential = Credential(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
+            self.credentials = Credentials(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
 
-        return self.credential
+        return self.credentials
 
     def login(self) -> str:
         arg_string = f"{USERNAME}:{self.password}"
@@ -47,22 +47,24 @@ class ConnectBox:
 
         return token
 
-    def logout(self):
-        credential = self.get_credential()
+    def logout(self) -> None:
+        credentials = self.get_credentials()
 
         params = {"_n": self.nonce}
-        cookies = {"credential": credential.token}
+        cookies = {"credential": credentials.token}
         response = requests.get(f"{self.hostname}/logout", params=params, cookies=cookies)
 
-        # The router returns 500 INTERNAL_SERVER_ERROR on logout
+        # The router returns 500 (Internal Server Error) on a successfull logout
         if response.status_code != 500:
             response.raise_for_status()
+
+        self.credentials = None
 
     def get_connected_devices(self) -> List[Device]:
         response = self.__call_get_connected_devices()
 
         if response.status_code == 401:
-            self.credential = None
+            self.credentials = None
             response = self.__call_get_connected_devices()
 
         response.raise_for_status()
@@ -72,15 +74,15 @@ class ConnectBox:
         return to_devices(response.text)
 
     def __call_get_connected_devices(self) -> requests.Response:
-        credential = self.get_credential()
+        credentials = self.get_credentials()
 
         params = {"_n": self.nonce}
-        cookies = {"credential": credential.token}
+        cookies = {"credential": credentials.token}
 
         return requests.get(f"{self.hostname}/getConnDevices", params=params, cookies=cookies)
 
 
 @dataclass
-class Credential:
+class Credentials:
     token: str
     expiration_time: float

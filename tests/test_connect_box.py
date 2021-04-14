@@ -63,9 +63,9 @@ def test_logout_accepts_http_status_500(requests_mock):
     assert logout_adapter.call_count == 1
 
 
-def test_logout_throws_for_403_forbidden(requests_mock):
+def test_logout_throws_for_401_unauthorized(requests_mock):
     login_adapter = requests_mock.get('/login', text="dummy_token")
-    logout_adapter = requests_mock.get('/logout', status_code=403)
+    logout_adapter = requests_mock.get('/logout', status_code=401)
 
     connect_box = ConnectBox("http://example.com", "secret")
 
