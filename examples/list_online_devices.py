@@ -37,6 +37,8 @@ def main():
     for device in devices:
         print(device.mac + " " + device.hostname)
 
+    connect_box.logout()
+
 
 if __name__ == "__main__":
     main()

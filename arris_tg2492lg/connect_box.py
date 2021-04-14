@@ -47,6 +47,17 @@ class ConnectBox:
 
         return token
 
+    def logout(self):
+        credential = self.get_credential()
+
+        params = {"_n": self.nonce}
+        cookies = {"credential": credential.token}
+        response = requests.get(f"{self.hostname}/logout", params=params, cookies=cookies)
+
+        # The router returns 500 INTERNAL_SERVER_ERROR on logout
+        if response.status_code != 500:
+            response.raise_for_status()
+
     def get_connected_devices(self) -> List[Device]:
         response = self.__call_get_connected_devices()
 

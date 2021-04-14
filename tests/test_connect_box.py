@@ -52,6 +52,30 @@ def test_get_connected_devices_throws_401_twice(requests_mock):
     assert get_connected_devices_adapter.call_count == 2
 
 
+def test_logout_accepts_http_status_500(requests_mock):
+    login_adapter = requests_mock.get('/login', text="dummy_token")
+    logout_adapter = requests_mock.get('/logout', status_code=500)
+
+    connect_box = ConnectBox("http://example.com", "secret")
+    connect_box.logout()
+
+    assert login_adapter.call_count == 1
+    assert logout_adapter.call_count == 1
+
+
+def test_logout_throws_for_403_forbidden(requests_mock):
+    login_adapter = requests_mock.get('/login', text="dummy_token")
+    logout_adapter = requests_mock.get('/logout', status_code=403)
+
+    connect_box = ConnectBox("http://example.com", "secret")
+
+    with pytest.raises(HTTPError):
+        connect_box.logout()
+
+    assert login_adapter.call_count == 1
+    assert logout_adapter.call_count == 1
+
+
 def get_mock_data():
     current_path = Path(os.path.dirname(os.path.realpath(__file__)))
     test_data_path = current_path / "getConnDevices-response.json"

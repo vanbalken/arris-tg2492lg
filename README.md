@@ -4,6 +4,8 @@ A unofficial Python client for retrieving information from the Arris TG2492LG ro
 
 The current functionality is limited to retrieving a list of devices that are connected to the router.
 
+> **_WARNING:_** The router prevents the admin user from logging in twice. This can cause problems with accessing the router's configuration pages while this platform is active. 
+
 ## Usage
 
 List all connected devices:
