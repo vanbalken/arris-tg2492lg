@@ -67,10 +67,30 @@ async def test_get_connected_devices(aiohttp_client, loop):
 #     assert login_adapter.call_count == 2
 #     assert get_connected_devices_adapter.call_count == 2
 
+# def test_logout_accepts_http_status_500(requests_mock):
+#     login_adapter = requests_mock.get('/login', text="dummy_token")
+#     logout_adapter = requests_mock.get('/logout', status_code=500)
+
+#     connect_box = ConnectBox("http://example.com", "secret")
+#     connect_box.logout()
+
+#     assert login_adapter.call_count == 1
+#     assert logout_adapter.call_count == 1
+
+# def test_logout_throws_for_401_unauthorized(requests_mock):
+#     login_adapter = requests_mock.get('/login', text="dummy_token")
+#     logout_adapter = requests_mock.get('/logout', status_code=401)
+
+#     connect_box = ConnectBox("http://example.com", "secret")
+
+#     with pytest.raises(HTTPError):
+#         connect_box.logout()
+
+#     assert login_adapter.call_count == 1
+#     assert logout_adapter.call_count == 1
 
 async def get_credential(request):
     return web.Response(text='dummy_token')
-
 
 async def get_mock_data(request):
     current_path = Path(os.path.dirname(os.path.realpath(__file__)))

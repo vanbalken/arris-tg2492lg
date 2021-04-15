@@ -27,7 +27,7 @@ async def main():
 
     async with aiohttp.ClientSession() as session:
         connect_box = ConnectBox(session, args.host, args.password)
-        
+
         all_devices = await connect_box.async_get_connected_devices()
 
         devices = []
@@ -40,6 +40,8 @@ async def main():
 
         for device in devices:
             print(device.mac + " " + device.hostname)
+
+        await connect_box.async_logout()
 
 
 if __name__ == "__main__":
