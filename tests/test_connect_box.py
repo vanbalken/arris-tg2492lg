@@ -1,9 +1,8 @@
 import os
 import pytest
 
-from aiohttp import web
+from aiohttp import web, ClientResponseError
 from pathlib import Path
-from requests import HTTPError
 
 from arris_tg2492lg.connect_box import ConnectBox
 
@@ -32,67 +31,105 @@ async def test_get_connected_devices(aiohttp_client, loop):
 
     assert len(connected_devices) == 4
 
-    # TODO fix unit tests
 
-    # assert login_adapter.call_count == 1
-    # assert get_connected_devices_adapter.call_count == 1
+async def test_get_connected_devices_throws_401_once(aiohttp_client, loop):
+    def login_result(request):
+        login_result.call_count += 1
+        return get_credential(request)
+
+    def conn_devices_result(request):
+        conn_devices_result.call_count += 1
+        if conn_devices_result.call_count == 1:
+            return web.Response(status=401)
+        else:
+            return get_mock_data(request)
+
+    login_result.call_count = 0
+    conn_devices_result.call_count = 0
+
+    app = web.Application(loop=loop)
+    app.router.add_get("/login", login_result)
+    app.router.add_get("/getConnDevices", conn_devices_result)
+    client = await aiohttp_client(app)
+
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
+    connected_devices = await connect_box.async_get_connected_devices()
+
+    assert len(connected_devices) == 4
+
+    assert login_result.call_count == 2
+    assert conn_devices_result.call_count == 2
 
 
-# def test_get_connected_devices_throws_401_once(requests_mock):
-#     get_conn_devices_json = get_mock_data()
+async def test_get_connected_devices_throws_401_twice(aiohttp_client, loop):
+    def login_result(request):
+        login_result.call_count += 1
+        return get_credential(request)
 
-#     login_adapter = requests_mock.get('/login', text="dummy_token")
-#     get_connected_devices_adapter = requests_mock.get('/getConnDevices',
-#                                                       [{"status_code": 401},
-#                                                        {"text": get_conn_devices_json}])
+    def conn_devices_result(request):
+        conn_devices_result.call_count += 1
+        return web.Response(status=401)
 
-#     connect_box = ConnectBox("http://example.com", "secret")
-#     connected_devices = connect_box.get_connected_devices()
+    login_result.call_count = 0
+    conn_devices_result.call_count = 0
 
-#     assert len(connected_devices) == 4
+    app = web.Application(loop=loop)
+    app.router.add_get("/login", login_result)
+    app.router.add_get("/getConnDevices", conn_devices_result)
+    client = await aiohttp_client(app)
 
-#     assert login_adapter.call_count == 2
-#     assert get_connected_devices_adapter.call_count == 2
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
+
+    with pytest.raises(ClientResponseError):
+        await connect_box.async_get_connected_devices()
+
+    assert login_result.call_count == 2
+    assert conn_devices_result.call_count == 2
 
 
-# def test_get_connected_devices_throws_401_twice(requests_mock):
-#     login_adapter = requests_mock.get('/login', text="dummy_token")
-#     get_connected_devices_adapter = requests_mock.get('/getConnDevices', status_code=401)
+async def test_logout_accepts_http_status_500(aiohttp_client, loop):
+    def get_logout_success(request):
+        get_logout_success.call_count += 1
+        return web.Response(status=500)
 
-#     connect_box = ConnectBox("http://example.com", "secret")
+    get_logout_success.call_count = 0
 
-#     with pytest.raises(HTTPError):
-#         connect_box.get_connected_devices()
+    app = web.Application(loop=loop)
+    app.router.add_get("/login", get_credential)
+    app.router.add_get("/logout", get_logout_success)
+    client = await aiohttp_client(app)
 
-#     assert login_adapter.call_count == 2
-#     assert get_connected_devices_adapter.call_count == 2
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
+    await connect_box.async_logout()
 
-# def test_logout_accepts_http_status_500(requests_mock):
-#     login_adapter = requests_mock.get('/login', text="dummy_token")
-#     logout_adapter = requests_mock.get('/logout', status_code=500)
+    assert get_logout_success.call_count == 1
 
-#     connect_box = ConnectBox("http://example.com", "secret")
-#     connect_box.logout()
 
-#     assert login_adapter.call_count == 1
-#     assert logout_adapter.call_count == 1
+async def test_logout_throws_for_401_unauthorized(aiohttp_client, loop):
+    async def get_logout_failure(request):
+        get_logout_failure.call_count += 1
+        return web.Response(status=401)
 
-# def test_logout_throws_for_401_unauthorized(requests_mock):
-#     login_adapter = requests_mock.get('/login', text="dummy_token")
-#     logout_adapter = requests_mock.get('/logout', status_code=401)
+    get_logout_failure.call_count = 0
 
-#     connect_box = ConnectBox("http://example.com", "secret")
+    app = web.Application(loop=loop)
+    app.router.add_get("/login", get_credential)
+    app.router.add_get("/logout", get_logout_failure)
+    client = await aiohttp_client(app)
 
-#     with pytest.raises(HTTPError):
-#         connect_box.logout()
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
 
-#     assert login_adapter.call_count == 1
-#     assert logout_adapter.call_count == 1
+    with pytest.raises(ClientResponseError):
+        await connect_box.async_logout()
 
-async def get_credential(request):
+    assert get_logout_failure.call_count == 1
+
+
+def get_credential(request):
     return web.Response(text='dummy_token')
 
-async def get_mock_data(request):
+
+def get_mock_data(request):
     current_path = Path(os.path.dirname(os.path.realpath(__file__)))
     test_data_path = current_path / "getConnDevices-response.json"
 
