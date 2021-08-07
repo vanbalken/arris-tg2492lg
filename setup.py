@@ -1,10 +1,10 @@
-from setuptools import find_packages
+from setuptools import find_packages, setup
 import arris_tg2492lg.const as arris_const
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
     name="arris-tg2492lg",
     version=arris_const.__version__,
     author="vanbalken",
