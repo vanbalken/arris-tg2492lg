@@ -11,14 +11,26 @@ The current functionality is limited to retrieving a list of devices that are co
 List all connected devices:
 
 ```python
+import asyncio
+import aiohttp
+
 from arris_tg2492lg import ConnectBox
 
-connect_box = ConnectBox("http://192.168.178.1", "password")
-devices = connect_box.get_connected_devices()
 
-print(devices)
+async def main():
+    async with aiohttp.ClientSession() as session:
+        connect_box = ConnectBox(session, "http://192.168.178.1", "password")
 
-connext_box.logout()
+        devices = await connect_box.async_get_connected_devices()
+
+        print(devices)
+
+        await connect_box.async_logout()
+
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
 ```
 
 Please note that the list of connected devices include devices that are offline (e.g. just went out of range of the wifi). The `Device` class contains a property `online` that can be checked.
