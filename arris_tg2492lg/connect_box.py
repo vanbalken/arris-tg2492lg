@@ -3,7 +3,8 @@ from __future__ import annotations
 import base64
 import logging
 import random
-import requests
+
+from aiohttp import ClientSession
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
@@ -16,73 +17,65 @@ LOG = logging.getLogger(__name__)
 
 
 class ConnectBox:
-    def __init__(self, hostname: str, password: str):
+    def __init__(self, websession: ClientSession, hostname: str, password: str):
+        self.websession = websession
         self.hostname = hostname
         self.password = password
         self.nonce = str(random.randrange(10000, 100000))
-        self.credentials: Optional[Credentials] = None
+        self.credential: Optional[Credential] = None
 
-    def get_credentials(self) -> Credentials:
-        if self.credentials is None or self.credentials.expiration_time >= datetime.now().timestamp():
-            token = self.login()
-            self.credentials = Credentials(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
+    async def async_get_credential(self) -> Credential:
+        if self.credential is None or self.credential.expiration_time >= datetime.now().timestamp():
+            token = await self.async_login()
+            self.credential = Credential(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
 
-        return self.credentials
+        return self.credential
 
-    def login(self) -> str:
+    async def async_login(self) -> str:
         arg_string = f"{USERNAME}:{self.password}"
         arg = base64.b64encode(arg_string.encode("utf-8")).decode("ascii")
 
         params = {"arg": arg, "_n": self.nonce}
-        response = requests.get(f"{self.hostname}/login", params=params)
-
-        response.raise_for_status()
-
-        if not response.text:
-            raise Exception("Failed to login")
-
-        token = response.text
-
-        LOG.debug("Received token: %s", token)
-
-        return token
-
-    def logout(self) -> None:
-        credentials = self.get_credentials()
-
-        params = {"_n": self.nonce}
-        cookies = {"credential": credentials.token}
-        response = requests.get(f"{self.hostname}/logout", params=params, cookies=cookies)
-
-        # The router returns 500 (Internal Server Error) on a successfull logout
-        if response.status_code != 500:
+        async with self.websession.get(f"{self.hostname}/login", params=params) as response:
             response.raise_for_status()
 
-        self.credentials = None
+            token = await response.text()
 
-    def get_connected_devices(self) -> List[Device]:
-        response = self.__call_get_connected_devices()
+            LOG.debug("Received token: %s", token)
 
-        if response.status_code == 401:
-            self.credentials = None
-            response = self.__call_get_connected_devices()
+            return token
 
-        response.raise_for_status()
-
-        LOG.debug("getConnDevices response: %s", response.text)
-
-        return to_devices(response.text)
-
-    def __call_get_connected_devices(self) -> requests.Response:
-        credentials = self.get_credentials()
+    async def async_logout(self) -> None:
+        credential = await self.async_get_credential()
 
         params = {"_n": self.nonce}
-        cookies = {"credential": credentials.token}
+        cookies = {"credential": credential.token}
 
-        return requests.get(f"{self.hostname}/getConnDevices", params=params, cookies=cookies)
+        async with self.websession.get(f"{self.hostname}/logout", params=params, cookies=cookies) as response:
+            if response.status != 500:
+                response.raise_for_status()
+            self.credential = None
+
+    async def async_get_connected_devices(self, retry_on_unauthorized=True) -> List[Device]:
+        credential = await self.async_get_credential()
+
+        params = {"_n": self.nonce}
+        cookies = {"credential": credential.token}
+        async with self.websession.get(f"{self.hostname}/getConnDevices", params=params, cookies=cookies) as response:
+            if retry_on_unauthorized is True and response.status == 401:
+                self.credential = None
+                return await self.async_get_connected_devices(False)
+
+            response.raise_for_status()
+
+            response_text = await response.text()
+
+            LOG.debug("getConnDevices response: %s", response.text)
+
+            return to_devices(response_text)
 
 
 @dataclass
-class Credentials:
+class Credential:
     token: str
     expiration_time: float

@@ -1,3 +1,5 @@
+import asyncio
+import aiohttp
 import argparse
 import sys
 
@@ -12,7 +14,7 @@ except ImportError:
     from arris_tg2492lg import ConnectBox
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(description="List MAC addresses of all online devices.")
     parser.add_argument("--host", action="store", dest="host", help="ip-address of the router")
     parser.add_argument("--password", action="store", dest="password", help="password of the router")
@@ -23,22 +25,25 @@ def main():
 
     args = parser.parse_args()
 
-    connect_box = ConnectBox(args.host, args.password)
-    all_devices = connect_box.get_connected_devices()
+    async with aiohttp.ClientSession() as session:
+        connect_box = ConnectBox(session, args.host, args.password)
 
-    devices = []
-    mac_addresses = set()
+        all_devices = await connect_box.async_get_connected_devices()
 
-    for device in all_devices:
-        if device.online and device.mac not in mac_addresses:
-            devices.append(device)
-            mac_addresses.add(device.mac)
+        devices = []
+        mac_addresses = set()
 
-    for device in devices:
-        print(device.mac + " " + device.hostname)
+        for device in all_devices:
+            if device.online and device.mac not in mac_addresses:
+                devices.append(device)
+                mac_addresses.add(device.mac)
 
-    connect_box.logout()
+        for device in devices:
+            print(device.mac + " " + device.hostname)
+
+        await connect_box.async_logout()
 
 
 if __name__ == "__main__":
-    main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
