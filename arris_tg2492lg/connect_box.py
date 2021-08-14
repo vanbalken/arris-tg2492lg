@@ -1,19 +1,21 @@
 from __future__ import annotations
 
 import base64
+import json
 import logging
 import random
 
 from aiohttp import ClientSession
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
+from yarl import URL
 
-from .const import USERNAME, TOKEN_EXPIRY_TIME
+from .const import HARDWARE_VERSION_OID, MAC_ADDRESS_OID, SERIAL_NUMBER_OID, SOFTWARE_VERSION_OID, USERNAME, TOKEN_EXPIRY_TIME
 from .device import Device
-from .mib_mapper import to_devices
+from .mib_mapper import format_mac, to_devices
 
-LOG = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class ConnectBox:
@@ -25,7 +27,7 @@ class ConnectBox:
         self.credential: Optional[Credential] = None
 
     async def async_get_credential(self) -> Credential:
-        if self.credential is None or self.credential.expiration_time >= datetime.now().timestamp():
+        if self.credential is None or self.credential.expiration_time <= datetime.now().timestamp():
             token = await self.async_login()
             self.credential = Credential(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
 
@@ -41,7 +43,7 @@ class ConnectBox:
 
             token = await response.text()
 
-            LOG.debug("Received token: %s", token)
+            _LOGGER.debug("Received token: %s", token)
 
             return token
 
@@ -70,12 +72,60 @@ class ConnectBox:
 
             response_text = await response.text()
 
-            LOG.debug("getConnDevices response: %s", response.text)
+            _LOGGER.debug("getConnDevices response: %s", response.text)
 
             return to_devices(response_text)
+
+    async def async_get_router_information(self) -> RouterInformation:
+        oids = [
+            MAC_ADDRESS_OID,
+            HARDWARE_VERSION_OID,
+            SOFTWARE_VERSION_OID,
+            SERIAL_NUMBER_OID,
+        ]
+
+        snmp_get_result = await self._async_snmp_get(oids)
+
+        router_information = RouterInformation(
+            format_mac(snmp_get_result[MAC_ADDRESS_OID]).upper(),
+            snmp_get_result[HARDWARE_VERSION_OID],
+            snmp_get_result[SOFTWARE_VERSION_OID],
+            snmp_get_result[SERIAL_NUMBER_OID])
+        return router_information
+
+    async def _async_snmp_get(self, oids: List[str]) -> Any:
+        credential = await self.async_get_credential()
+
+        # Manually create url because otherwise the semicolons are url encoded
+        oids_joined = ";".join(oids)
+        url = f"{self.hostname}/snmpGet?oids={oids_joined}&_n={self.nonce}"
+        cookies = {"credential": credential.token}
+
+        _LOGGER.debug("Get SNMP query %s results for router %s", oids, self.hostname)
+        async with self.websession.get(URL(url), cookies=cookies) as response:
+            _LOGGER.debug("url: %s", response.url)
+            response.raise_for_status()
+
+            data = await response.text()
+
+            if data.startswith("Error"):
+                _LOGGER.error("Error: %s, for url: %s", data, response.url)
+                raise Exception(data)
+
+            _LOGGER.debug("snmpGet response: %s", data)
+
+            return json.loads(data)
 
 
 @dataclass
 class Credential:
     token: str
     expiration_time: float
+
+
+@dataclass
+class RouterInformation:
+    mac_address: str
+    hardware_version: str
+    software_version: str
+    serial_number: str

@@ -125,6 +125,21 @@ async def test_logout_throws_for_401_unauthorized(aiohttp_client, loop):
     assert get_logout_failure.call_count == 1
 
 
+async def test_get_router_information(aiohttp_client, loop):
+    app = web.Application(loop=loop)
+    app.router.add_get("/login", get_credential)
+    app.router.add_get("/snmpGet", get_mock_router_information)
+    client = await aiohttp_client(app)
+
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
+    router_information = await connect_box.async_get_router_information()
+
+    assert router_information.mac_address == "12:34:56:78:90:AB"
+    assert router_information.hardware_version == "10"
+    assert router_information.software_version == "9.1.2103.102"
+    assert router_information.serial_number == "ABCD12345678"
+
+
 def get_credential(request):
     return web.Response(text='dummy_token')
 
@@ -132,5 +147,12 @@ def get_credential(request):
 def get_mock_data(request):
     current_path = Path(os.path.dirname(os.path.realpath(__file__)))
     test_data_path = current_path / "getConnDevices-response.json"
+
+    return web.Response(text=test_data_path.read_text())
+
+
+def get_mock_router_information(request):
+    current_path = Path(os.path.dirname(os.path.realpath(__file__)))
+    test_data_path = current_path / "snmpGet-response.json"
 
     return web.Response(text=test_data_path.read_text())
