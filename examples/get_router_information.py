@@ -2,9 +2,6 @@ import asyncio
 import aiohttp
 import argparse
 import sys
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
 
 try:
     from arris_tg2492lg import ConnectBox  # The typical way to import arris_tg2492lg

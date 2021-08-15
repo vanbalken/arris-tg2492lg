@@ -1,24 +1,14 @@
+from arris_tg2492lg.const import CLIENT_ADAPTER_TYPE_OID, CLIENT_COMMENT_OID, CLIENT_DEVICE_NAME_OID, CLIENT_HOST_NAME_OID, CLIENT_LEASE_END_OID, CLIENT_MAC_OID, CLIENT_ONLINE_OID, CLIENT_ROW_STATUS_OID, CLIENT_TYPE_OID
 import ipaddress
 import json
 import logging
 import re
 from collections import OrderedDict
-from typing import List, Optional
+from typing import List
 
 from .device import Device
 
-LOG = logging.getLogger(__name__)
-
-ARRIS_ENTERPRISE_OID = "1.3.6.1.4.1.4115"
-HOST_NAME_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.3"
-MAC_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.4"
-ADAPTER_TYPE_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.6"
-TYPE_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.7"
-LEASE_END_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.9"
-ROW_STATUS_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.13"
-ONLINE_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.14"
-COMMENT_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.15"
-DEVICE_NAME_OID = ARRIS_ENTERPRISE_OID + ".1.20.1.1.2.4.2.1.20"
+_LOGGER = logging.getLogger(__name__)
 
 ADAPTER_TYPES = {
     0: "unknown",
@@ -58,7 +48,7 @@ def to_devices(json_string: str) -> List[Device]:
         split_key = key.split(".")
 
         if len(split_key) < 19:
-            LOG.debug("Found non-OID key: %s, with value: %s", key, value)
+            _LOGGER.debug("Found non-OID key: %s, with value: %s", key, value)
             continue
 
         oid = ".".join(split_key[:16])
@@ -72,33 +62,33 @@ def to_devices(json_string: str) -> List[Device]:
             current_device = Device(ip)
             devices.append(current_device)
 
-        if oid == HOST_NAME_OID:
+        if oid == CLIENT_HOST_NAME_OID:
             current_device.hostname = value
-        elif oid == MAC_OID:
+        elif oid == CLIENT_MAC_OID:
             current_device.mac = format_mac(value)
-        elif oid == ADAPTER_TYPE_OID:
+        elif oid == CLIENT_ADAPTER_TYPE_OID:
             current_device.adapter_type = ADAPTER_TYPES[int(value)]
-        elif oid == TYPE_OID:
+        elif oid == CLIENT_TYPE_OID:
             current_device.type = value
-        elif oid == LEASE_END_OID:
+        elif oid == CLIENT_LEASE_END_OID:
             current_device.lease_end = format_date(value)
-        elif oid == ROW_STATUS_OID:
+        elif oid == CLIENT_ROW_STATUS_OID:
             current_device.row_status = value
-        elif oid == ONLINE_OID:
+        elif oid == CLIENT_ONLINE_OID:
             current_device.online = value == "1"
-        elif oid == COMMENT_OID:
+        elif oid == CLIENT_COMMENT_OID:
             current_device.comment = value
-        elif oid == DEVICE_NAME_OID:
+        elif oid == CLIENT_DEVICE_NAME_OID:
             current_device.device_name = value
         else:
-            LOG.warn("Unknown OID: %s", key)
+            _LOGGER.warn("Unknown OID: %s", key)
 
     return devices
 
 
-def format_mac(value: str) -> Optional[str]:
+def format_mac(value: str) -> str:
     if not re.fullmatch(r'^\$[0-9A-Fa-f]{12}$', value):
-        return None
+        raise ValueError(f"Received invalid MAC value: {value}")
 
     value = value[1:]
     mac = ""
@@ -111,9 +101,9 @@ def format_mac(value: str) -> Optional[str]:
     return mac
 
 
-def format_date(value: str) -> Optional[str]:
+def format_date(value: str) -> str:
     if not re.fullmatch(r'^\$[0-9A-Fa-f]+$', value):
-        return None
+        raise ValueError(f"Received invalid date value: {value}")
 
     hex_array = bytes.fromhex(value[1:])
 

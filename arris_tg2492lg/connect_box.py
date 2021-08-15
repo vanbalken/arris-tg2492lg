@@ -87,7 +87,7 @@ class ConnectBox:
         snmp_get_result = await self._async_snmp_get(oids)
 
         router_information = RouterInformation(
-            format_mac(snmp_get_result[MAC_ADDRESS_OID]).upper(),
+            format_mac(snmp_get_result[MAC_ADDRESS_OID]),
             snmp_get_result[HARDWARE_VERSION_OID],
             snmp_get_result[SOFTWARE_VERSION_OID],
             snmp_get_result[SERIAL_NUMBER_OID])

@@ -134,7 +134,7 @@ async def test_get_router_information(aiohttp_client, loop):
     connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
     router_information = await connect_box.async_get_router_information()
 
-    assert router_information.mac_address == "12:34:56:78:90:AB"
+    assert router_information.mac_address == "12:34:56:78:90:ab"
     assert router_information.hardware_version == "10"
     assert router_information.software_version == "9.1.2103.102"
     assert router_information.serial_number == "ABCD12345678"
