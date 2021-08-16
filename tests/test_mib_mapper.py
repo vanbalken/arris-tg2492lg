@@ -1,4 +1,3 @@
-import ipaddress
 import os
 import pytest
 
@@ -18,7 +17,7 @@ def test_to_devices() -> None:
 
     device = devices[0]
 
-    assert device.ip == ipaddress.ip_address("192.168.178.2")
+    assert device.ip == "192.168.178.2"
     assert device.hostname == "My Device"
     assert device.mac == "12:34:56:78:90:AB"
     assert device.adapter_type == "wireless1"
@@ -31,7 +30,7 @@ def test_to_devices() -> None:
 
     device2 = devices[1]
 
-    assert device2.ip == ipaddress.ip_address("192.168.178.3")
+    assert device2.ip == "192.168.178.3"
     assert device2.hostname == "My Device 2"
     assert device2.mac == "BA:09:87:65:43:21"
     assert device2.adapter_type == "ethernet2"
@@ -44,7 +43,7 @@ def test_to_devices() -> None:
 
     device3 = devices[2]
 
-    assert device3.ip == ipaddress.ip_address("2001:1c12:8d6:bb00:b0f6:855a:dcd:5528")
+    assert device3.ip == "2001:1c12:8d6:bb00:b0f6:855a:dcd:5528"
     assert device3.hostname == "My Device 3"
     assert device3.mac == "AA:AA:AA:AA:AA:AA"
     assert device3.adapter_type == "ethernet2"
@@ -57,7 +56,7 @@ def test_to_devices() -> None:
 
     device4 = devices[3]
 
-    assert device4.ip == ipaddress.ip_address("2001:1c12:8d6:bb00:b0f6:855a:dcd:5529")
+    assert device4.ip == "2001:1c12:8d6:bb00:b0f6:855a:dcd:5529"
     assert device4.hostname == "My Device"
     assert device4.mac == "12:34:56:78:90:AB"
     assert device4.adapter_type == "wireless1"

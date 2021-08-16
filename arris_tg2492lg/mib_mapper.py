@@ -56,7 +56,7 @@ def to_devices(json_string: str) -> List[Device]:
         # ip address, either ipv4 or ipv6. ip version is specified by "split_key[17:19]", which can be ignored.
         ip_split = split_key[19:]
         ip_bytes = bytes(map(int, ip_split))
-        ip = ipaddress.ip_address(ip_bytes)
+        ip = str(ipaddress.ip_address(ip_bytes))
 
         if current_device is None or current_device.ip != ip:
             current_device = Device(ip)
