@@ -1,7 +1,9 @@
 import asyncio
-import aiohttp
-import argparse
 import sys
+
+from aiohttp import ClientSession
+from aiohttp.client_exceptions import ClientResponseError
+from argparse import ArgumentParser
 
 try:
     from arris_tg2492lg import ConnectBox  # The typical way to import arris_tg2492lg
@@ -15,7 +17,7 @@ except ImportError:
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Get router information.")
+    parser = ArgumentParser(description="Get router information.")
     parser.add_argument("--host", action="store", dest="host", help="ip-address of the router")
     parser.add_argument("--password", action="store", dest="password", help="password of the router")
 
@@ -25,7 +27,7 @@ async def main():
 
     args = parser.parse_args()
 
-    async with aiohttp.ClientSession() as session:
+    async with ClientSession() as session:
         connect_box = ConnectBox(session, args.host, args.password)
 
         try:
@@ -35,11 +37,10 @@ async def main():
             print("Hardware version: %s" % router_information.hardware_version)
             print("Software version: %s" % router_information.software_version)
             print("Serial number: %s" % router_information.serial_number)
-        # except Exception as e:
-        #     print("Failed to retrieve information of router %s" % args.host)
-        #     print(e)
-        finally:
+
             await connect_box.async_logout()
+        except ClientResponseError as exc:
+            print("Failed to retrieve router information. Router responded with: %s" % exc.message)
 
 
 if __name__ == "__main__":

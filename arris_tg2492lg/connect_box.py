@@ -1,4 +1,5 @@
 from __future__ import annotations
+from arris_tg2492lg.exception import ConnectBoxError
 
 import base64
 import json
@@ -20,25 +21,18 @@ _LOGGER = logging.getLogger(__name__)
 
 class ConnectBox:
     def __init__(self, websession: ClientSession, hostname: str, password: str):
-        self.websession = websession
-        self.hostname = hostname
-        self.password = password
-        self.nonce = str(random.randrange(10000, 100000))
-        self.credential: Optional[Credential] = None
-
-    async def async_get_credential(self) -> Credential:
-        if self.credential is None or self.credential.expiration_time <= datetime.now().timestamp():
-            token = await self.async_login()
-            self.credential = Credential(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
-
-        return self.credential
+        self._websession = websession
+        self._hostname = hostname
+        self._password = password
+        self._nonce = str(random.randrange(10000, 100000))
+        self._credential: Optional[Credential] = None
 
     async def async_login(self) -> str:
-        arg_string = f"{USERNAME}:{self.password}"
+        arg_string = f"{USERNAME}:{self._password}"
         arg = base64.b64encode(arg_string.encode("utf-8")).decode("ascii")
 
-        params = {"arg": arg, "_n": self.nonce}
-        async with self.websession.get(f"{self.hostname}/login", params=params) as response:
+        params = {"arg": arg, "_n": self._nonce}
+        async with self._websession.get(f"{self._hostname}/login", params=params) as response:
             response.raise_for_status()
 
             token = await response.text()
@@ -48,31 +42,36 @@ class ConnectBox:
             return token
 
     async def async_logout(self) -> None:
-        credential = await self.async_get_credential()
+        credential = await self._async_get_credential()
 
-        params = {"_n": self.nonce}
+        params = {"_n": self._nonce}
         cookies = {"credential": credential.token}
 
-        async with self.websession.get(f"{self.hostname}/logout", params=params, cookies=cookies) as response:
+        async with self._websession.get(f"{self._hostname}/logout", params=params, cookies=cookies) as response:
             if response.status != 500:
                 response.raise_for_status()
-            self.credential = None
+            self._credential = None
 
     async def async_get_connected_devices(self, retry_on_unauthorized=True) -> List[Device]:
-        credential = await self.async_get_credential()
+        """Get all connected devices.
 
-        params = {"_n": self.nonce}
+        A device is returned for every IP address. When a device has both a IPv4 and a IPv6 address it will appear
+        twice in the returned list.
+        """
+        credential = await self._async_get_credential()
+
+        params = {"_n": self._nonce}
         cookies = {"credential": credential.token}
-        async with self.websession.get(f"{self.hostname}/getConnDevices", params=params, cookies=cookies) as response:
+        async with self._websession.get(f"{self._hostname}/getConnDevices", params=params, cookies=cookies) as response:
             if retry_on_unauthorized is True and response.status == 401:
-                self.credential = None
+                self._credential = None
                 return await self.async_get_connected_devices(False)
 
             response.raise_for_status()
 
             response_text = await response.text()
 
-            _LOGGER.debug("getConnDevices response: %s", response.text)
+            _LOGGER.debug("getConnDevices response: %s", response_text)
 
             return to_devices(response_text)
 
@@ -93,24 +92,30 @@ class ConnectBox:
             snmp_get_result[SERIAL_NUMBER_OID])
         return router_information
 
-    async def _async_snmp_get(self, oids: List[str]) -> Any:
-        credential = await self.async_get_credential()
+    async def _async_get_credential(self) -> Credential:
+        if self._credential is None or self._credential.expiration_time <= datetime.now().timestamp():
+            token = await self.async_login()
+            self._credential = Credential(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
 
-        # Manually create url because otherwise the semicolons are url encoded
+        return self._credential
+
+    async def _async_snmp_get(self, oids: List[str]) -> Any:
+        credential = await self._async_get_credential()
+
+        # Manually create url because otherwise the semicolons are url encoded.
         oids_joined = ";".join(oids)
-        url = f"{self.hostname}/snmpGet?oids={oids_joined}&_n={self.nonce}"
+        url = f"{self._hostname}/snmpGet?oids={oids_joined}&_n={self._nonce}"
         cookies = {"credential": credential.token}
 
-        _LOGGER.debug("Get SNMP query %s results for router %s", oids, self.hostname)
-        async with self.websession.get(URL(url), cookies=cookies) as response:
-            _LOGGER.debug("url: %s", response.url)
+        _LOGGER.debug("Get SNMP query %s results for router %s", oids, self._hostname)
+        async with self._websession.get(URL(url), cookies=cookies) as response:
             response.raise_for_status()
 
             data = await response.text()
 
+            # Response starts with "Error in OID formatting!" when an invalid OID is requested.
             if data.startswith("Error"):
-                _LOGGER.error("Error: %s, for url: %s", data, response.url)
-                raise Exception(data)
+                raise ConnectBoxError(data)
 
             _LOGGER.debug("snmpGet response: %s", data)
 

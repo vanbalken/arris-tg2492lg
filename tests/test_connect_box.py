@@ -13,7 +13,7 @@ async def test_async_get_credential(aiohttp_client, loop):
     client = await aiohttp_client(app)
 
     connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret")
-    credential = await connect_box.async_get_credential()
+    credential = await connect_box._async_get_credential()
 
     print(credential.token)
 
