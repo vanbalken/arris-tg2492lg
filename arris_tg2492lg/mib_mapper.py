@@ -49,7 +49,7 @@ ADAPTER_TYPES = {
 
 
 def to_devices(json_string: str) -> List[Device]:
-    """ Maps JSON result from router to Devices. """
+    """Maps JSON result from router to Devices."""
     json_data: OrderedDict[str, str] = json.loads(json_string, object_pairs_hook=OrderedDict)
     devices: List[Device] = []
     current_device = None
@@ -104,7 +104,7 @@ def format_mac(value: str) -> str:
     mac = ""
 
     for i in range(6):
-        mac += value[i * 2:i * 2 + 2]
+        mac += value[i * 2 : i * 2 + 2]
         if i + 1 < 6:
             mac += ":"
 

@@ -1,5 +1,9 @@
 aiohttp
+
+# test
+black
 flake8
 mypy
+pre-commit
 pytest
 pytest-aiohttp
