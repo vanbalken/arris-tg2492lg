@@ -1,4 +1,3 @@
-from arris_tg2492lg.const import CLIENT_ADAPTER_TYPE_OID, CLIENT_COMMENT_OID, CLIENT_DEVICE_NAME_OID, CLIENT_HOST_NAME_OID, CLIENT_LEASE_END_OID, CLIENT_MAC_OID, CLIENT_ONLINE_OID, CLIENT_ROW_STATUS_OID, CLIENT_TYPE_OID
 import ipaddress
 import json
 import logging
@@ -6,6 +5,17 @@ import re
 from collections import OrderedDict
 from typing import List
 
+from .const import (
+    CLIENT_ADAPTER_TYPE_OID,
+    CLIENT_COMMENT_OID,
+    CLIENT_DEVICE_NAME_OID,
+    CLIENT_HOST_NAME_OID,
+    CLIENT_LEASE_END_OID,
+    CLIENT_MAC_OID,
+    CLIENT_ONLINE_OID,
+    CLIENT_ROW_STATUS_OID,
+    CLIENT_TYPE_OID,
+)
 from .device import Device
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,7 +44,7 @@ ADAPTER_TYPES = {
     20: "wireless16",
     21: "ethernet2",
     22: "ethernet3",
-    23: "ethernet4"
+    23: "ethernet4",
 }
 
 
@@ -87,7 +97,7 @@ def to_devices(json_string: str) -> List[Device]:
 
 
 def format_mac(value: str) -> str:
-    if not re.fullmatch(r'^\$[0-9A-Fa-f]{12}$', value):
+    if not re.fullmatch(r"^\$[0-9A-Fa-f]{12}$", value):
         raise ValueError(f"Received invalid MAC value: {value}")
 
     value = value[1:]
@@ -102,7 +112,7 @@ def format_mac(value: str) -> str:
 
 
 def format_date(value: str) -> str:
-    if not re.fullmatch(r'^\$[0-9A-Fa-f]+$', value):
+    if not re.fullmatch(r"^\$[0-9A-Fa-f]+$", value):
         raise ValueError(f"Received invalid date value: {value}")
 
     hex_array = bytes.fromhex(value[1:])
@@ -116,5 +126,7 @@ def format_date(value: str) -> str:
     seconds = hex_array[6]
     micro_seconds = hex_array[7]
 
-    date = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}:{:02d}".format(years, months, days, hours, minutes, seconds, micro_seconds)
+    date = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}:{:02d}".format(
+        years, months, days, hours, minutes, seconds, micro_seconds
+    )
     return date

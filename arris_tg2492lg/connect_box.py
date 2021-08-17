@@ -1,5 +1,4 @@
 from __future__ import annotations
-from arris_tg2492lg.exception import ConnectBoxError
 
 import base64
 import json
@@ -12,8 +11,16 @@ from datetime import datetime
 from typing import Any, List, Optional
 from yarl import URL
 
-from .const import HARDWARE_VERSION_OID, MAC_ADDRESS_OID, SERIAL_NUMBER_OID, SOFTWARE_VERSION_OID, USERNAME, TOKEN_EXPIRY_TIME
+from .const import (
+    HARDWARE_VERSION_OID,
+    MAC_ADDRESS_OID,
+    SERIAL_NUMBER_OID,
+    SOFTWARE_VERSION_OID,
+    USERNAME,
+    TOKEN_EXPIRY_TIME,
+)
 from .device import Device
+from .exception import ConnectBoxError
 from .mib_mapper import format_mac, to_devices
 
 _LOGGER = logging.getLogger(__name__)
@@ -89,7 +96,8 @@ class ConnectBox:
             format_mac(snmp_get_result[MAC_ADDRESS_OID]),
             snmp_get_result[HARDWARE_VERSION_OID],
             snmp_get_result[SOFTWARE_VERSION_OID],
-            snmp_get_result[SERIAL_NUMBER_OID])
+            snmp_get_result[SERIAL_NUMBER_OID],
+        )
         return router_information
 
     async def _async_get_credential(self) -> Credential:
