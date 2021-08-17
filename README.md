@@ -40,3 +40,13 @@ An example for retrieving a list of the MAC addresses of all online device is in
 ```bash
 python3 list_online_devices.py --host http://192.168.178.1 --password <password>
 ```
+
+## Development
+
+Setup `arris_tg2492lg` for local development by running:
+
+```bash
+scripts/setup
+```
+
+This will download the required libraries and configure a git commit hook.

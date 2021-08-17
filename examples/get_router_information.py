@@ -17,7 +17,7 @@ except ImportError:
 
 
 async def main():
-    parser = ArgumentParser(description="List MAC addresses of all online devices.")
+    parser = ArgumentParser(description="Get router information.")
     parser.add_argument("--host", action="store", dest="host", help="ip-address of the router")
     parser.add_argument("--password", action="store", dest="password", help="password of the router")
 
@@ -31,18 +31,12 @@ async def main():
         connect_box = ConnectBox(session, args.host, args.password)
 
         try:
-            all_devices = await connect_box.async_get_connected_devices()
+            router_information = await connect_box.async_get_router_information()
 
-            devices = []
-            mac_addresses = set()
-
-            for device in all_devices:
-                if device.online and device.mac not in mac_addresses:
-                    devices.append(device)
-                    mac_addresses.add(device.mac)
-
-            for device in devices:
-                print(device.mac + " " + device.hostname)
+            print("MAC address: %s" % router_information.mac_address)
+            print("Hardware version: %s" % router_information.hardware_version)
+            print("Software version: %s" % router_information.software_version)
+            print("Serial number: %s" % router_information.serial_number)
 
             await connect_box.async_logout()
         except ClientResponseError as exc:
