@@ -1,7 +1,10 @@
 __version__ = "2.0.0"
 
+from datetime import timedelta
+
+
 USERNAME = "admin"
-TOKEN_EXPIRY_TIME = 5 * 60 * 1000
+TOKEN_EXPIRATION = timedelta(minutes=5)
 
 # For an overview of all Arris OIDs see: https://mibs.observium.org/mib/ARRIS-ROUTER-DEVICE-MIB/#
 ARRIS_ROUTER_MIB = "1.3.6.1.4.1.4115.1.20.1"
