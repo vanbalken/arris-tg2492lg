@@ -107,10 +107,7 @@ class ConnectBox:
         if self._credential is None or self._credential.is_expired():
             await self.async_login()
 
-        if self._credential is None:
-            raise InvalidCredentialError
-
-        return self._credential
+        return self._credential  # type: ignore
 
     async def _async_snmp_get(self, oids: List[str]) -> Any:
         credential = await self._async_get_credential()
