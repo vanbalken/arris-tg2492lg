@@ -16,11 +16,11 @@ from .const import (
     MAC_ADDRESS_OID,
     SERIAL_NUMBER_OID,
     SOFTWARE_VERSION_OID,
+    TOKEN_EXPIRATION,
     USERNAME,
-    TOKEN_EXPIRY_TIME,
 )
 from .device import Device
-from .exception import ConnectBoxError
+from .exception import ConnectBoxError, InvalidCredentialError
 from .mib_mapper import format_mac, to_devices
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,6 +45,9 @@ class ConnectBox:
             token = await response.text()
 
             _LOGGER.debug("Received token: %s", token)
+
+            self._credential = Credential(token)
+            self._credential.validate()
 
             return token
 
@@ -101,9 +104,11 @@ class ConnectBox:
         return router_information
 
     async def _async_get_credential(self) -> Credential:
-        if self._credential is None or self._credential.expiration_time <= datetime.now().timestamp():
-            token = await self.async_login()
-            self._credential = Credential(token, datetime.now().timestamp() + TOKEN_EXPIRY_TIME)
+        if self._credential is None or self._credential.is_expired():
+            await self.async_login()
+
+        if self._credential is None:
+            raise InvalidCredentialError
 
         return self._credential
 
@@ -130,10 +135,59 @@ class ConnectBox:
             return json.loads(data)
 
 
-@dataclass
 class Credential:
-    token: str
-    expiration_time: float
+    def __init__(self, token: str):
+        self._token = token
+        self._created_at = datetime.now()
+
+    def is_expired(self) -> bool:
+        expires = self._created_at + TOKEN_EXPIRATION
+        return datetime.now() > expires
+
+    def validate(self) -> None:
+        try:
+            self._token_as_json()
+        except Exception as exc:
+            raise InvalidCredentialError from exc
+
+    def is_multi_login(self) -> bool:
+        """Return if the user is already logged in."""
+
+        is_logged_in_value = self._is_logged_in()
+
+        return is_logged_in_value > 0
+
+    @property
+    def token(self) -> str:
+        return self._token
+
+    def _is_logged_in(self) -> int:
+        """Return if the user is already logged in.
+
+        Reverse engineered from a javascript library of the routers web application. The response of this method doesn't
+        indicate if a consecutive call will fail or succeed. Method is kept for reference.
+        """
+        token_json = self._token_as_json()
+
+        if "muti" in token_json:
+            muti = token_json["muti"]
+            con_type = token_json["conType"]
+            gw_wan = token_json["gwWan"]
+
+            if gw_wan == "f" and con_type == "LAN" and muti == "GW_WAN":
+                return 2  # Remote user already login.
+            elif gw_wan == "t" and muti == "LAN":
+                return 1  # Local user already login.
+            if gw_wan == "f" and con_type == "LAN" and muti == "LAN":
+                return 3  # Other local user already login.
+            elif gw_wan == "t" and muti == "GW_WAN":
+                return 4  # Other remote user already login.
+
+        return 0
+
+    def _token_as_json(self) -> Any:
+        decoded_token = base64.b64decode(self._token)
+        return json.loads(decoded_token)
 
 
 @dataclass
