@@ -39,8 +39,7 @@ class ConnectBox:
         arg_string = f"{USERNAME}:{self._password}"
         arg = base64.b64encode(arg_string.encode("utf-8")).decode("ascii")
 
-        params = {"arg": arg, "_n": self._nonce}
-        async with self._websession.get(f"{self._hostname}/login", params=params) as response:
+        async with self._websession.get(f"{self._hostname}/login?arg={arg}&_n={self._nonce}") as response:
             response.raise_for_status()
 
             token = await response.text()
