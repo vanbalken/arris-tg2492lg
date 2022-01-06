@@ -9,6 +9,7 @@ from aiohttp import ClientSession
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, List, Optional
+from urllib.parse import quote
 from yarl import URL
 
 from .const import (
@@ -30,7 +31,7 @@ class ConnectBox:
     def __init__(self, websession: ClientSession, hostname: str, password: str):
         self._websession = websession
         self._hostname = hostname
-        self._password = password
+        self._password = quote(password)
         self._nonce = str(random.randrange(10000, 100000))
         self._credential: Optional[Credential] = None
 
