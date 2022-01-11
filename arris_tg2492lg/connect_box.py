@@ -7,6 +7,7 @@ import requests
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
+from urllib.parse import quote
 
 from .const import USERNAME, TOKEN_EXPIRY_TIME
 from .device import Device
@@ -30,10 +31,10 @@ class ConnectBox:
         return self.credentials
 
     def login(self) -> str:
-        arg_string = f"{USERNAME}:{self.password}"
+        arg_string = f"{quote(USERNAME)}:{quote(self.password)}"
         arg = base64.b64encode(arg_string.encode("utf-8")).decode("ascii")
 
-        params = {"arg": arg, "_n": self.nonce}
+        params = f"arg={arg}&_n={self.nonce}"
         response = requests.get(f"{self.hostname}/login", params=params)
 
         response.raise_for_status()
