@@ -46,7 +46,15 @@ python3 list_online_devices.py --host http://192.168.178.1 --password <password>
 Setup `arris_tg2492lg` for local development by running:
 
 ```bash
+python3 -m venv venv
+```
+
+```bash
+source venv/bin/activate
+```
+
+```bash
 scripts/setup
 ```
 
-This will download the required libraries and configure a git commit hook.
+This will create a virtual environment, download the required libraries and configure a git commit hook.
