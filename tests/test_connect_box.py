@@ -59,6 +59,51 @@ async def test_async_login_nok_html_response(aiohttp_client):
         await connect_box.async_login()
 
 
+async def test_login_url_replaces_special_characters_in_password(aiohttp_client):
+    """Validates that special characters in the password are replaced.
+    The webpage of the router replaces special characters in both the username and password using the '%xx' escape.
+    """
+
+    async def login_result(request):
+        login_result.url = str(request.url)
+        return await _get_credential(request)
+
+    login_result.url = ""
+
+    app = web.Application()
+    app.router.add_get("/login", login_result)
+    client = await aiohttp_client(app)
+
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "&=")
+
+    token = await connect_box.async_login()
+
+    assert token == "eyJuYW1lIjogImFkbWluIn0="  # base64 representation of: {"name": "admin"}
+    assert login_result.url.startswith(f"http://{client.host}:{client.port}/login?arg=YWRtaW46JTI2JTNE&_n=")
+
+
+async def test_login_does_not_url_encode_base64(aiohttp_client):
+    """Validate that the characters in the base64 arg parameter are not replaced.
+    The portal of the router does not replace special characters (=) in the base64 encoded parameter.
+    """
+
+    async def login_result(request):
+        login_result.url = str(request.url)
+        return await _get_credential(request)
+
+    login_result.url = ""
+
+    app = web.Application()
+    app.router.add_get("/login", login_result)
+    client = await aiohttp_client(app)
+
+    connect_box = ConnectBox(client.session, f"http://{client.host}:{client.port}", "secret2")
+
+    await connect_box.async_login()
+
+    assert login_result.url.startswith(f"http://{client.host}:{client.port}/login?arg=YWRtaW46c2VjcmV0Mg==&_n=")
+
+
 async def test_get_connected_devices(aiohttp_client):
     app = web.Application()
     app.router.add_get("/login", _get_credential)
