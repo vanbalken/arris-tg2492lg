@@ -1,7 +1,7 @@
 aiohttp==3.9.1
 
 # test
-black==22.3.0
+black==23.12.1
 flake8==7.0.0
 mypy==0.960
 pre-commit==3.6.0
