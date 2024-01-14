@@ -52,7 +52,7 @@ def to_devices(json_string: str) -> List[Device]:
     """Maps JSON result from router to Devices."""
     json_data: OrderedDict[str, str] = json.loads(json_string, object_pairs_hook=OrderedDict)
     devices: List[Device] = []
-    current_device = None
+    current_device: Device | None = None
 
     for key, value in json_data.items():
         split_key = key.split(".")

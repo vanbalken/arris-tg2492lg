@@ -62,7 +62,7 @@ class ConnectBox:
                 response.raise_for_status()
             self._credential = None
 
-    async def async_get_connected_devices(self, retry_on_unauthorized=True) -> List[Device]:
+    async def async_get_connected_devices(self, retry_on_unauthorized: bool = True) -> List[Device]:
         """Get all connected devices.
 
         A device is returned for every IP address. When a device has both a IPv4 and a IPv6 address it will appear
