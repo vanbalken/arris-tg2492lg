@@ -14,5 +14,5 @@ class Device:
         self.comment: Optional[str] = None
         self.device_name: Optional[str] = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "ip: %s, hostname: %s" % (self.ip, self.hostname)
