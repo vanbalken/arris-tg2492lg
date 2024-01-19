@@ -2,7 +2,6 @@ import ipaddress
 import json
 import logging
 import re
-from collections import OrderedDict
 from typing import List
 
 from .const import (
@@ -16,49 +15,26 @@ from .const import (
     CLIENT_ROW_STATUS_OID,
     CLIENT_TYPE_OID,
 )
-from .device import Device
+from .device import Device, LanClientAdapterType, LanClientType
 
 _LOGGER = logging.getLogger(__name__)
-
-ADAPTER_TYPES = {
-    0: "unknown",
-    1: "ethernet",
-    2: "usb",
-    3: "moca",
-    4: "dsg",
-    5: "wireless1",
-    6: "wireless2",
-    7: "wireless3",
-    8: "wireless4",
-    9: "wireless5",
-    10: "wireless6",
-    11: "wireless7",
-    12: "wireless8",
-    13: "wireless9",
-    14: "wireless10",
-    15: "wireless11",
-    16: "wireless12",
-    17: "wireless13",
-    18: "wireless14",
-    19: "wireless15",
-    20: "wireless16",
-    21: "ethernet2",
-    22: "ethernet3",
-    23: "ethernet4",
-}
 
 
 def to_devices(json_string: str) -> List[Device]:
     """Maps JSON result from router to Devices."""
-    json_data: OrderedDict[str, str] = json.loads(json_string, object_pairs_hook=OrderedDict)
+    return json.loads(json_string, object_pairs_hook=to_devices_2)
+
+
+def to_devices_2(list_of_pairs: List[tuple[str, str]]) -> List[Device]:
+    """Maps JSON result from router to Devices."""
     devices: List[Device] = []
     current_device: Device | None = None
 
-    for key, value in json_data.items():
+    for key, value in list_of_pairs:
         split_key = key.split(".")
 
         if len(split_key) < 19:
-            _LOGGER.debug("Found non-OID key: %s, with value: %s", key, value)
+            _LOGGER.warning("Found non-OID key: %s, with value: %s", key, value)
             continue
 
         oid = ".".join(split_key[:16])
@@ -77,9 +53,9 @@ def to_devices(json_string: str) -> List[Device]:
         elif oid == CLIENT_MAC_OID:
             current_device.mac = format_mac(value)
         elif oid == CLIENT_ADAPTER_TYPE_OID:
-            current_device.adapter_type = ADAPTER_TYPES[int(value)]
+            current_device.adapter_type = LanClientAdapterType(int(value))
         elif oid == CLIENT_TYPE_OID:
-            current_device.type = value
+            current_device.type = LanClientType(int(value))
         elif oid == CLIENT_LEASE_END_OID:
             current_device.lease_end = format_date(value)
         elif oid == CLIENT_ROW_STATUS_OID:
