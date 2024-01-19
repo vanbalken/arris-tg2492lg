@@ -2,7 +2,7 @@ import ipaddress
 import json
 import logging
 import re
-from typing import List
+from typing import List, cast
 
 from .const import (
     CLIENT_ADAPTER_TYPE_OID,
@@ -22,7 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def to_devices(json_string: str) -> List[Device]:
     """Maps JSON result from router to Devices."""
-    return json.loads(json_string, object_pairs_hook=to_devices_2)
+    return cast(List[Device], json.loads(json_string, object_pairs_hook=to_devices_2))
 
 
 def to_devices_2(list_of_pairs: List[tuple[str, str]]) -> List[Device]:
