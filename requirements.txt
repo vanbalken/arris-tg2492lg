@@ -4,7 +4,7 @@ aiohttp==3.11.8
 black==25.1.0
 flake8==7.1.1
 mypy==1.14.1
-pre-commit==4.0.1
+pre-commit==4.1.0
 pytest==8.3.3
 pytest-aiohttp==1.0.5
 pytest-asyncio==0.25.3
