@@ -1,4 +1,4 @@
-aiohttp==3.12.13
+aiohttp==3.12.14
 
 # test
 black==25.1.0
