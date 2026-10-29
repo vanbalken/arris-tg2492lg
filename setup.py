@@ -1,17 +1,12 @@
-import re
-
 from setuptools import find_packages, setup
+import arris_tg2492lg.const as arris_const
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# Read the version without importing the package, which needs aiohttp.
-with open("arris_tg2492lg/const.py", "r") as fh:
-    version = re.search(r'^__version__ = "([^"]+)"', fh.read(), re.MULTILINE).group(1)
-
 setup(
     name="arris-tg2492lg",
-    version=version,
+    version=arris_const.__version__,
     author="vanbalken",
     description="Python client for the Arris TG2492LG",
     long_description=long_description,
